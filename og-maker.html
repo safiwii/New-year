@@ -1,0 +1,28 @@
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>Картинка-превью для ссылки</title>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@1,400;1,500&family=Manrope:wght@500&display=swap" rel="stylesheet">
+<style>body{font:16px sans-serif;background:#0B1030;color:#FFF7EA;padding:20px}input,button{font:inherit;padding:10px;margin:4px;min-height:44px}canvas{max-width:100%;border:1px solid #D9B26F;display:block;margin-top:12px}</style></head><body>
+<h3>Картинка для превью ссылки (1200×630)</h3>
+<input id="d" value="Алины" placeholder="Для кого (в дательном падеже)"><input id="m" value="А" maxlength="2" size="3" placeholder="Буква">
+<button id="go">Обновить</button><a id="dl" download="og.png"><button>Скачать og.png</button></a>
+<canvas id="c" width="1200" height="630"></canvas>
+<script>
+const F='"Bodoni Moda",Georgia,serif', c=document.getElementById('c'), x=c.getContext('2d');
+function foil(w){const g=x.createLinearGradient(600-w/2,0,600+w/2,0);[[0,'#B98A45'],[.3,'#F0D6A0'],[.5,'#FFF6DA'],[.7,'#D9B26F'],[1,'#B98A45']].forEach(([o,k])=>g.addColorStop(o,k));return g}
+async function draw(){
+  await document.fonts.load('italic 500 80px "Bodoni Moda"');
+  let g=x.createLinearGradient(0,0,0,630);g.addColorStop(0,'#1B2468');g.addColorStop(1,'#05071A');x.fillStyle=g;x.fillRect(0,0,1200,630);
+  g=x.createRadialGradient(600,0,0,600,0,700);g.addColorStop(0,'rgba(240,214,160,.3)');g.addColorStop(1,'rgba(240,214,160,0)');x.fillStyle=g;x.fillRect(0,0,1200,630);
+  x.strokeStyle=foil(1200);x.lineWidth=4;x.strokeRect(24,24,1152,582);x.lineWidth=1;x.strokeRect(40,40,1120,550);
+  for(let i=1;i<24;i++){x.fillStyle=i%7?'#F0D6A0':'#C8324B';x.globalAlpha=.8;x.beginPath();x.arc(i*50,50+Math.sin(i*.9)*8,5,0,7);x.fill()}x.globalAlpha=1;
+  const sg=x.createRadialGradient(250,290,10,260,315,150);sg.addColorStop(0,'#EE5D74');sg.addColorStop(.5,'#C8324B');sg.addColorStop(1,'#6E1425');
+  x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=40;x.fillStyle=sg;x.beginPath();x.arc(260,315,130,0,7);x.fill();x.shadowBlur=0;
+  x.strokeStyle='rgba(240,214,160,.6)';x.lineWidth=3;x.beginPath();x.arc(260,315,102,0,7);x.stroke();
+  x.fillStyle='#F0D6A0';x.font='italic 500 130px '+F;x.textAlign='center';x.textBaseline='middle';x.fillText(document.getElementById('m').value,260,322);
+  x.textAlign='left';x.textBaseline='alphabetic';
+  x.font='italic 500 88px '+F;x.fillStyle=foil(700);x.fillText('Полночный выпуск',450,300);
+  x.font='italic 400 56px '+F;x.fillStyle='#FFF7EA';x.fillText('Для '+document.getElementById('d').value,452,380);
+  x.font='500 28px Manrope,sans-serif';x.fillStyle='#B8B3D9';x.fillText('Обложка запечатана. Откроется ровно в 00:00',452,450);
+  document.getElementById('dl').href=c.toDataURL('image/png');
+}
+document.getElementById('go').onclick=draw;draw();
+</script></body></html>
