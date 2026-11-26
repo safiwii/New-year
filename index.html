@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Полночный выпуск — Новогодний номер</title>
+  <meta name="description" content="Персональный новогодний номер журнала. Главный подарок откроется ровно в полночь." />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#0B1030" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Полночный выпуск — персональный новогодний номер" />
+  <meta property="og:description" content="Обложка запечатана. Откроется ровно в 00:00." />
+  <meta property="og:image" content="assets/og.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%23C8324B' stroke='%23F0D6A0' stroke-width='3'/%3E%3Ctext x='32' y='43' font-size='32' text-anchor='middle' fill='%23F0D6A0' font-family='Georgia,serif' font-style='italic'%3E%D0%90%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..600&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="theme.css" />
+</head>
+<body>
+  <!-- Фоновые холсты: снег и праздничный салют -->
+  <canvas id="snow-canvas" aria-hidden="true"></canvas>
+  <canvas id="fireworks-canvas" aria-hidden="true"></canvas>
+
+  <!-- Размытые огни гирлянд сверху -->
+  <div class="garland-glow" aria-hidden="true">
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
+
+  <!-- Верхняя панель управления: звук, уменьшение анимации, прогресс звёзд -->
+  <header class="top-hud" id="top-hud">
+    <div class="hud-left">
+      <button class="icon-btn" id="toc-jump-btn" title="Содержание" aria-label="Содержание">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <line x1="4" y1="7" x2="20" y2="7"></line>
+          <line x1="4" y1="12" x2="16" y2="12"></line>
+          <line x1="4" y1="17" x2="20" y2="17"></line>
+        </svg>
+      </button>
+      <div class="star-counter" id="star-counter-pill" title="Собранные звёзды выпуска">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2L14.8 8.8L22 9.5L16.5 14.2L18.2 21.3L12 17.5L5.8 21.3L7.5 14.2L2 9.5L9.2 8.8L12 2Z"/>
+        </svg>
+        <span id="stars-count-text">0 / 12</span>
+      </div>
+    </div>
+
+    <div class="hud-right">
+      <button class="icon-btn" id="motion-toggle-btn" title="Меньше движения" aria-label="Меньше движения">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M9 12h6"></path>
+        </svg>
+      </button>
+      <button class="icon-btn" id="sound-toggle-btn" title="Звук" aria-label="Включить или выключить звук">
+        <svg id="sound-icon-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+        </svg>
+        <svg id="sound-icon-off" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+          <line x1="23" y1="9" x2="17" y2="15"></line>
+          <line x1="17" y1="9" x2="23" y2="15"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ЭКРАН 0: КОНВЕРТ С ИМЕНЕМ -->
+  <section class="envelope-screen" id="envelope-screen">
+    <div class="envelope-card" id="open-envelope-btn" role="button" tabindex="0" aria-label="Открыть конверт">
+      <div class="envelope-border">
+        <p class="envelope-kicker">Персональное издание · № 01</p>
+        <h1 class="envelope-recipient" id="env-recipient-name">Для Алины</h1>
+        <p class="envelope-note">Открыть в тишине или со звуком</p>
+
+        <div class="wax-seal-wrapper">
+          <div class="wax-seal" id="env-wax-seal">
+            <span class="wax-monogram" id="env-monogram">А</span>
+          </div>
+        </div>
+
+        <span class="envelope-cta">Коснитесь печати, чтобы вскрыть</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ГЛАВНАЯ СЦЕНА ЖУРНАЛА -->
+  <main class="magazine-stage hidden" id="magazine-stage">
+    <div class="magazine-book" id="magazine-book">
+      <!-- СТРАНИЦА 0: ОБЛОЖКА -->
+      <article class="page page-night active" data-page="0" data-rubric="Обложка">
+        <div class="cover-layout">
+          <img id="cover-photo" class="cover-bg-photo" src="" alt="Героиня номера" />
+          <div class="cover-vignette"></div>
+
+          <div class="cover-top">
+            <span class="cover-edition" id="cover-subtitle">Специальный новогодний номер</span>
+            <h1 class="cover-masthead foil-text" id="cover-masthead">Полночный выпуск</h1>
+          </div>
+
+          <div class="cover-bottom">
+            <h2 class="cover-hero-name" id="cover-hero-name">Алина</h2>
+            <ul class="cover-teasers" id="cover-teasers"></ul>
+
+            <!-- Сургучная печать с таймером до 00:00 -->
+            <div class="cover-seal-box" id="cover-seal-box">
+              <div class="wax-seal seal-large" id="cover-wax-seal">
+                <div class="seal-crack" aria-hidden="true"></div>
+                <span class="wax-monogram" id="cover-monogram">А</span>
+              </div>
+              <div class="seal-timer-info">
+                <span class="seal-label" id="cover-seal-label">Главный подарок: откроется в 00:00</span>
+                <div class="countdown-digits" id="countdown-digits">00:00:00</div>
+                <button class="demo-unlock-btn hidden" id="demo-unlock-btn">Демо: наступило 00:00</button>
+              </div>
+            </div>
+
+            <div class="swipe-hint">Листайте влево или нажмите на край страницы</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- СТРАНИЦА 1: СОДЕРЖАНИЕ И 12 ЗВЁЗД -->
+      <article class="page page-paper" data-page="1" data-rubric="Содержание">
+        <div class="running-header">
+          <span>Содержание</span>
+          <span>01</span>
+        </div>
+        <div class="page-scroll">
+          <h2 class="section-title">В этом номере</h2>
+          <p class="section-subtitle">Пройдите все десять рубрик и найдите две тайные звезды на страницах, чтобы открыть бонус в полночь.</p>
+
+          <div class="stars-board" id="toc-stars-board"></div>
+
+          <ol class="toc-list" id="toc-list"></ol>
+        </div>
+      </article>
+
+      <!-- СТРАНИЦА 2: РУБРИКА 1 — ФОТОСЕССИЯ ГОДА -->
+      <article class="page page-paper" data-page="2" data-rubric="Фотосессия года">
+        <div class="running-header">
+          <span>01 · Фотосессия года</span>
+          <span>02</span>
+        </div>
+        <div class="page-scroll">
+          <h2 class="section-title">Ёлка воспоминаний</h2>
+          <p class="section-subtitle">Нажмите на любой золотой шар, чтобы рассмотреть кадр уходящего года.</p>
+
+          <div class="tree-container" id="tree-container">
+            <svg class="tree-outline" viewBox="0 0 320 420" fill="none" aria-hidden="true">
+<defs>
+<linearGradient id="trg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#27349A"/><stop offset=".55" stop-color="#141C63"/><stop offset="1" stop-color="#0A1033"/></linearGradient>
+<radialGradient id="trh"><stop offset="0" stop-color="#FFF6DA" stop-opacity=".95"/><stop offset=".3" stop-color="#F0D6A0" stop-opacity=".45"/><stop offset="1" stop-color="#F0D6A0" stop-opacity="0"/></radialGradient>
+<radialGradient id="trbi" cx=".35" cy=".3"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#D9CDB4"/></radialGradient>
+<radialGradient id="trbg" cx=".35" cy=".3"><stop offset="0" stop-color="#FFF6DA"/><stop offset=".6" stop-color="#E0B968"/><stop offset="1" stop-color="#9C7330"/></radialGradient>
+<radialGradient id="trbn" cx=".35" cy=".3"><stop offset="0" stop-color="#4A58C2"/><stop offset="1" stop-color="#0B1030"/></radialGradient>
+<radialGradient id="trbc" cx=".35" cy=".3"><stop offset="0" stop-color="#F26B82"/><stop offset="1" stop-color="#8F1E31"/></radialGradient>
+</defs>
+<circle cx="160" cy="210" r="190" fill="url(#trh)" opacity=".16"/>
+<path d="M160 270 C127.4 323.0 38.6 346.3 12.0 376 Q30.5 391 49.0 376 Q67.5 391 86.0 376 Q104.5 391 123.0 376 Q141.5 391 160.0 376 Q178.5 391 197.0 376 Q215.5 391 234.0 376 Q252.5 391 271.0 376 Q289.5 391 308.0 376 C281.4 346.3 192.6 323.0 160 270 Z" fill="url(#trg)" stroke="#D9B26F" stroke-width="1.2" stroke-linejoin="round"/><path d="M168.1 323.8l6.7 4.4M172.9 328.7l3.7 4.5M211.1 339.4l3.4 3.9M177.1 292.0l5.8 3.1M277.3 370.4l5.6 4.8M126.0 297.9l-5.1 3.2M140.1 300.7l-3.1 4.4M205.4 322.8l5.1 4.9M183.7 328.0l4.8 3.8M286.8 371.8l6.4 5.1M131.6 311.7l-4.2 3.2M139.6 351.4l-6.4 4.2M245.8 368.3l3.0 3.6M152.9 364.1l-6.9 4.2M166.6 290.4l6.1 3.8M150.9 291.7l-6.9 5.3M144.5 294.4l-3.4 3.2M91.8 354.1l-5.2 4.3M177.9 300.8l3.5 4.9M155.2 294.3l-3.9 3.8M235.8 369.4l4.2 5.7M151.4 302.5l-6.4 4.9M188.1 292.8l3.9 3.8M124.8 352.0l-4.2 3.2M164.6 291.9l4.0 4.8M154.5 316.7l-6.8 4.5M219.5 334.6l3.7 3.5M235.0 363.9l4.0 3.6M247.5 349.1l3.8 5.9M183.8 361.6l4.7 3.3M180.2 287.4l4.0 5.1M189.8 306.6l5.4 3.9M176.3 299.4l3.3 3.7M216.0 333.2l5.5 3.8M89.5 364.7l-3.1 3.8M101.2 323.2l-3.7 4.1M100.4 334.4l-4.4 5.7M199.6 370.3l5.8 4.8M129.2 296.4l-3.1 5.7M248.0 345.7l3.1 4.9M192.7 326.4l4.3 6.0M162.4 290.6l5.9 5.7M200.4 348.9l6.2 5.7M180.9 315.0l6.6 5.6M197.0 320.7l6.5 4.7M139.6 339.0l-5.3 4.8M167.4 291.1l7.0 5.6M138.1 348.1l-5.9 4.7M204.9 322.8l3.3 5.3M164.2 286.6l4.9 3.7M159.5 345.5l-5.5 5.8M115.2 306.5l-4.2 5.0M133.6 301.8l-6.6 5.0M212.1 322.9l4.3 5.0M154.5 301.5l-6.2 5.7M133.4 361.5l-5.3 3.9M159.8 296.0l-6.3 5.5M246.6 346.6l4.1 3.5M129.7 323.7l-3.9 4.2M158.9 339.1l-4.3 5.5M148.0 370.4l-3.3 3.1M55.4 360.8l-5.8 4.7M190.2 311.2l3.1 3.4M95.5 324.0l-6.3 3.7M129.9 296.4l-5.5 4.3M187.1 339.4l6.2 5.9M103.9 344.2l-4.9 3.5M159.0 284.9l-5.9 3.5M145.3 308.0l-5.8 4.6M203.8 338.1l4.6 5.4M62.7 363.7l-6.7 5.2M157.0 295.4l-5.5 5.7M168.2 317.2l6.5 5.4M151.1 367.1l-5.6 3.6M222.0 347.5l5.6 5.2M192.9 302.8l6.9 5.9M204.8 331.3l4.3 5.7M126.0 359.3l-3.3 4.3M202.1 332.4l4.9 3.1M66.6 355.2l-6.2 3.5" stroke="#F0D6A0" stroke-opacity=".22" stroke-width=".8" stroke-linecap="round"/><path d="M12.0 376 Q30.5 391 49.0 376 Q67.5 391 86.0 376 Q104.5 391 123.0 376 Q141.5 391 160.0 376 Q178.5 391 197.0 376 Q215.5 391 234.0 376 Q252.5 391 271.0 376 Q289.5 391 308.0 376" stroke="#FFF7EA" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/><path d="M160 206 C131.8 268.0 55.0 295.3 32.0 330 Q50.3 345 68.6 330 Q86.9 345 105.1 330 Q123.4 345 141.7 330 Q160.0 345 178.3 330 Q196.6 345 214.9 330 Q233.1 345 251.4 330 Q269.7 345 288.0 330 C265.0 295.3 188.2 268.0 160 206 Z" fill="url(#trg)" stroke="#D9B26F" stroke-width="1.2" stroke-linejoin="round"/><path d="M186.5 255.5l3.6 3.4M188.6 274.8l6.4 5.1M158.4 320.2l-6.8 3.3M161.9 243.5l4.2 5.2M163.5 287.7l6.4 4.7M149.6 253.0l-6.4 5.7M183.5 242.1l6.9 4.6M118.5 280.7l-5.1 4.5M91.4 284.2l-6.9 4.5M191.6 262.5l5.3 4.5M89.6 293.2l-5.2 4.2M250.8 321.4l4.1 4.4M156.6 233.5l-6.3 5.7M138.1 270.5l-3.8 4.9M82.8 318.1l-6.1 3.1M142.5 240.6l-5.7 4.0M171.5 257.7l3.4 5.2M160.5 233.0l4.0 3.6M151.8 276.2l-4.5 4.2M115.7 276.1l-3.8 4.9M164.5 287.7l6.4 4.8M107.9 310.8l-6.0 5.4M122.5 315.7l-4.3 5.8M194.4 243.1l6.6 3.4M176.6 245.4l4.0 3.3M145.1 308.2l-6.2 3.4M179.5 262.7l3.1 3.6M226.0 292.3l6.9 3.3M192.4 273.6l5.0 5.1M132.8 240.0l-3.4 3.1M162.0 278.5l5.3 3.4M141.5 239.6l-6.4 6.0M75.6 318.3l-3.2 5.9M191.0 269.0l4.3 4.4M151.1 274.6l-5.4 3.0M216.5 294.3l3.7 4.4M143.7 298.4l-3.8 3.5M98.5 274.3l-6.6 5.4M219.4 294.7l5.5 4.2M160.6 283.6l6.9 5.4M191.6 247.4l6.0 5.3M142.4 306.4l-6.6 5.6M203.5 293.6l6.1 4.2M87.7 296.6l-4.4 4.4M155.9 221.1l-5.6 4.9M191.9 244.6l5.7 4.0M170.9 289.9l5.1 4.2M191.7 326.0l5.8 5.3M55.5 323.9l-5.5 5.2M152.5 247.2l-3.2 3.6M119.8 259.8l-4.0 5.7M161.1 278.3l6.9 4.7M190.6 325.5l6.2 3.2M197.3 283.3l3.2 5.8M158.4 237.0l-3.7 4.5M95.4 284.8l-6.8 4.3M172.7 275.8l4.5 3.9M169.4 289.4l4.1 5.1M119.0 251.4l-4.0 3.1M174.5 236.6l4.6 5.7M82.0 299.3l-7.0 5.8M176.4 227.8l4.7 4.4M104.2 323.2l-5.1 5.8M154.7 296.6l-6.9 5.5M104.2 284.0l-5.5 4.4M130.4 241.6l-5.1 3.4M179.0 266.9l4.8 3.8M148.7 281.7l-6.1 4.6M260.7 325.7l5.9 3.7M179.0 232.1l6.1 4.9M137.9 258.1l-5.7 4.7M179.0 282.7l6.0 3.6M196.0 246.4l6.7 5.6M145.2 224.2l-4.1 4.3M100.9 286.1l-5.2 3.2M167.6 229.2l5.2 4.9M157.9 259.6l-3.8 4.0M218.5 299.0l3.3 3.4M182.9 305.8l6.1 3.6M133.5 265.0l-6.2 4.1" stroke="#F0D6A0" stroke-opacity=".22" stroke-width=".8" stroke-linecap="round"/><path d="M32.0 330 Q50.3 345 68.6 330 Q86.9 345 105.1 330 Q123.4 345 141.7 330 Q160.0 345 178.3 330 Q196.6 345 214.9 330 Q233.1 345 251.4 330 Q269.7 345 288.0 330" stroke="#FFF7EA" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/><path d="M160 140 C137.1 201.0 74.7 227.8 56.0 262 Q73.3 277 90.7 262 Q108.0 277 125.3 262 Q142.7 277 160.0 262 Q177.3 277 194.7 262 Q212.0 277 229.3 262 Q246.7 277 264.0 262 C245.3 227.8 182.9 201.0 160 140 Z" fill="url(#trg)" stroke="#D9B26F" stroke-width="1.2" stroke-linejoin="round"/><path d="M221.5 222.0l4.3 4.6M219.1 231.6l4.7 4.1M173.9 164.1l3.3 3.2M158.3 212.7l-5.7 3.9M98.4 234.7l-3.9 5.0M153.2 162.5l-5.9 5.1M136.2 183.4l-4.4 5.2M129.4 192.1l-5.8 4.7M233.9 249.5l6.7 4.3M130.8 237.5l-4.3 4.2M227.4 251.2l4.0 4.1M149.1 192.0l-4.6 4.2M163.4 174.3l6.2 4.6M169.7 241.0l3.7 5.3M124.6 245.6l-3.1 4.5M167.3 210.6l6.9 5.0M94.7 237.6l-5.2 5.4M145.4 162.7l-5.9 5.7M164.7 162.8l3.6 5.2M128.2 221.5l-3.9 5.3M187.7 208.2l4.6 4.0M190.3 254.7l5.0 4.6M188.4 229.0l6.7 4.2M185.6 239.9l6.4 5.4M220.1 240.7l6.8 4.9M182.1 208.5l6.2 4.3M128.7 197.7l-6.0 6.0M132.9 193.1l-3.8 4.3M192.0 184.4l3.2 3.9M165.9 165.9l6.1 3.5M158.7 160.5l-5.3 5.7M149.3 157.8l-3.7 3.7M172.8 178.5l5.4 3.7M148.8 173.2l-3.7 5.3M163.4 186.4l6.3 4.4M184.4 181.1l6.7 4.0M209.7 210.9l4.9 3.7M173.2 159.2l6.2 4.2M161.7 208.9l4.1 6.0M126.8 222.4l-3.0 4.4M184.0 192.6l5.9 4.8M144.0 170.4l-4.3 3.8M162.6 244.4l5.5 6.0M162.2 181.7l3.6 5.3M167.0 154.1l6.4 5.5M152.0 162.6l-5.9 3.3M156.9 203.9l-6.8 4.8M128.9 243.2l-6.2 4.3M91.4 249.3l-6.3 3.6M162.8 210.5l3.6 5.5M146.5 186.4l-3.3 3.9M180.7 202.6l4.4 5.1M155.9 165.0l-4.8 5.9M183.7 240.3l3.0 4.1M124.6 227.8l-5.3 4.4M171.4 155.1l6.2 3.6M134.9 218.1l-4.5 4.6M148.8 185.0l-4.6 5.0M141.3 180.7l-5.9 4.0M170.8 252.3l5.9 4.0M97.4 240.0l-3.6 3.3M187.0 224.5l3.7 4.2M174.4 241.0l3.4 3.7M142.5 170.3l-4.6 3.2M147.7 249.7l-5.0 4.9M206.2 233.8l4.5 4.0M117.7 196.9l-4.6 5.1M211.6 256.1l5.6 4.8M155.9 155.9l-4.4 5.0M155.3 165.1l-5.0 5.4M177.1 239.8l3.6 5.3M168.0 247.9l4.4 4.5M169.4 168.7l6.9 4.5M205.5 228.4l3.8 5.8M123.3 219.2l-3.3 3.7M182.4 214.0l4.3 5.8M157.1 191.6l-3.5 5.9M177.4 168.1l5.2 4.7M133.9 212.3l-6.6 6.0M175.4 239.0l3.5 5.5" stroke="#F0D6A0" stroke-opacity=".22" stroke-width=".8" stroke-linecap="round"/><path d="M56.0 262 Q73.3 277 90.7 262 Q108.0 277 125.3 262 Q142.7 277 160.0 262 Q177.3 277 194.7 262 Q212.0 277 229.3 262 Q246.7 277 264.0 262" stroke="#FFF7EA" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/><path d="M160 80 C142.8 135.0 96.0 159.2 82.0 190 Q97.6 205 113.2 190 Q128.8 205 144.4 190 Q160.0 205 175.6 190 Q191.2 205 206.8 190 Q222.4 205 238.0 190 C224.0 159.2 177.2 135.0 160 80 Z" fill="url(#trg)" stroke="#D9B26F" stroke-width="1.2" stroke-linejoin="round"/><path d="M180.5 120.5l4.0 4.7M123.7 170.4l-5.2 3.2M153.1 96.9l-6.9 5.8M141.7 154.6l-5.7 5.2M165.8 129.1l6.2 3.0M158.7 112.4l-3.6 4.2M132.3 146.4l-5.1 3.8M145.8 146.3l-5.6 3.1M125.7 155.7l-6.8 4.8M153.5 137.2l-5.5 5.1M186.9 163.7l4.9 6.0M201.3 171.1l4.6 4.3M194.2 146.1l5.1 4.6M187.7 133.8l4.3 3.2M201.2 160.8l5.9 4.8M139.3 163.2l-5.4 3.2M158.3 105.4l-5.0 4.2M164.7 98.8l5.1 3.7M154.4 122.2l-3.9 3.2M218.3 177.8l5.7 5.6M180.6 132.8l3.9 5.2M194.1 146.1l3.4 5.4M161.2 105.4l6.8 3.0M150.7 116.4l-4.3 3.2M198.8 176.4l4.6 4.1M120.7 147.9l-3.1 5.7M159.9 122.3l-6.7 5.9M138.5 137.5l-4.2 5.8M122.5 176.5l-6.4 4.1M135.9 137.5l-6.5 6.0M165.5 112.6l3.8 5.6M150.6 98.6l-5.9 3.9M205.7 176.8l5.9 3.4M203.6 158.0l4.8 3.2M151.5 114.5l-5.8 3.6M149.6 110.7l-5.7 5.4M170.0 128.3l6.5 4.8M151.1 115.1l-6.7 5.0M167.0 119.5l3.4 5.9M162.0 134.5l5.1 3.1M141.0 149.2l-4.0 5.4M154.0 102.0l-6.0 3.7M162.4 119.7l3.7 5.7M97.6 184.9l-4.8 5.3M187.1 129.4l5.0 3.5M172.1 145.2l4.4 5.0M161.8 166.0l5.0 5.5M162.0 157.0l6.8 3.5M123.4 165.7l-5.4 3.7M179.0 134.5l6.1 5.4M159.5 115.7l-3.9 4.7M124.5 139.9l-5.4 5.1M191.7 146.7l3.7 3.5M159.9 95.6l-4.7 4.3M174.6 118.2l3.3 5.7M163.7 146.3l6.2 3.7M153.4 107.5l-3.2 3.9M162.3 151.2l4.1 4.8M169.1 102.1l3.7 3.8M167.0 108.7l6.3 5.4M157.8 99.6l-4.5 3.6M99.6 183.3l-5.0 5.3M112.5 184.7l-4.8 5.2M154.2 97.6l-6.6 3.4M147.1 130.1l-4.7 3.2M170.9 97.2l6.1 5.2M148.9 115.1l-5.2 3.7M191.2 136.5l4.5 4.0M174.8 184.3l3.2 4.2M118.4 153.8l-4.4 5.1M170.8 173.5l6.5 4.4M182.0 130.1l4.5 5.3M153.4 113.8l-3.7 4.6M149.0 109.1l-3.9 4.4M157.1 122.4l-7.0 5.0M124.8 173.4l-4.5 3.2M146.4 157.6l-4.1 3.1M150.7 110.7l-4.6 5.8M136.4 159.8l-4.4 3.5M142.1 180.2l-6.1 5.2" stroke="#F0D6A0" stroke-opacity=".22" stroke-width=".8" stroke-linecap="round"/><path d="M82.0 190 Q97.6 205 113.2 190 Q128.8 205 144.4 190 Q160.0 205 175.6 190 Q191.2 205 206.8 190 Q222.4 205 238.0 190" stroke="#FFF7EA" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/><path d="M160 26 C148.6 73.0 117.4 93.7 108.0 120 Q121.0 135 134.0 120 Q147.0 135 160.0 120 Q173.0 135 186.0 120 Q199.0 135 212.0 120 C202.6 93.7 171.4 73.0 160 26 Z" fill="url(#trg)" stroke="#D9B26F" stroke-width="1.2" stroke-linejoin="round"/><path d="M120.4 108.9l-4.3 4.2M167.7 46.3l4.3 5.3M136.3 79.5l-4.6 3.7M154.1 43.1l-5.4 3.1M157.1 63.7l-5.2 3.4M143.8 93.7l-5.9 5.0M152.6 51.2l-4.1 5.1M154.9 70.8l-6.5 3.7M154.4 62.2l-3.9 3.1M162.1 41.9l5.3 5.4M142.3 114.1l-5.7 5.8M165.7 56.4l5.7 5.9M138.9 106.0l-5.5 3.3M155.0 72.5l-3.2 4.2M159.9 64.9l-4.1 3.5M158.9 70.6l-3.7 5.0M146.9 58.2l-4.4 4.3M162.1 51.5l5.8 4.7M128.1 93.2l-4.6 4.1M158.2 44.8l-3.2 4.5M158.2 84.5l-4.3 3.8M157.6 41.8l-6.6 4.7M165.7 59.9l3.7 4.4M187.5 86.8l4.5 4.7M183.1 111.6l5.5 4.9M156.2 71.2l-4.1 5.5M150.5 106.9l-6.6 3.1M160.2 50.3l4.2 4.1M129.2 114.3l-3.8 3.7M142.6 91.7l-3.0 4.6M148.6 69.9l-5.0 5.0M166.9 81.7l5.2 5.5M145.5 113.6l-4.4 5.7M168.1 63.8l5.8 5.1M188.2 113.3l3.6 4.9M163.3 77.3l4.5 3.9M162.4 96.9l3.9 3.7M147.6 64.7l-5.1 3.4M151.9 44.8l-3.4 5.1M158.9 48.6l-6.1 4.4M169.6 52.4l6.5 3.2M160.2 59.3l6.2 4.2M143.1 94.4l-5.9 4.0M170.2 65.4l6.4 5.5M155.5 83.1l-5.8 4.9M183.1 103.2l3.5 4.1M142.6 90.9l-3.7 3.0M185.7 84.5l6.9 3.4M154.7 92.3l-5.5 4.2M201.3 110.9l3.2 5.1M149.5 49.0l-4.1 5.2M126.1 115.5l-4.3 3.1M159.1 81.2l-4.5 3.9M185.2 100.8l4.1 4.2M176.1 86.9l6.9 4.2M163.1 92.7l6.2 3.4M149.3 53.3l-6.7 3.8M140.7 77.1l-4.3 3.1M139.8 83.0l-5.5 3.8M159.4 57.3l-4.5 3.8M152.2 43.9l-6.6 3.9M153.7 46.0l-4.9 6.0M170.7 55.4l4.9 4.2M152.2 101.3l-3.2 4.7M167.8 89.9l4.1 5.8M199.2 105.7l4.8 5.5M137.7 95.1l-3.1 3.5M150.2 49.0l-4.4 5.3M160.5 63.6l3.0 3.6M117.7 112.9l-5.1 5.4M177.4 100.2l4.6 5.4M180.5 102.9l6.9 3.3M151.6 112.2l-5.8 3.8M120.6 109.1l-5.3 3.7M154.3 69.5l-5.6 5.4M165.7 67.7l4.4 3.8M145.3 108.8l-3.4 4.0M139.8 96.4l-6.0 4.6M138.9 91.7l-3.4 3.4M157.2 66.6l-3.0 4.5" stroke="#F0D6A0" stroke-opacity=".22" stroke-width=".8" stroke-linecap="round"/><path d="M108.0 120 Q121.0 135 134.0 120 Q147.0 135 160.0 120 Q173.0 135 186.0 120 Q199.0 135 212.0 120" stroke="#FFF7EA" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/><path d="M32.7 354.0 Q160 406.0 287.3 354.0" stroke="#F0D6A0" stroke-opacity=".6" stroke-width="1"/><g class="lights b"><circle cx="52.3" cy="361.4" r="7" fill="#F0D6A0" opacity=".22"/><circle cx="52.3" cy="361.4" r="2.6" fill="#F0D6A0"/></g><g class="lights a"><circle cx="71.9" cy="367.5" r="7" fill="#FFE7B0" opacity=".22"/><circle cx="71.9" cy="367.5" r="2.6" fill="#FFE7B0"/></g><g class="lights b"><circle cx="91.5" cy="372.5" r="7" fill="#F0D6A0" opacity=".22"/><circle cx="91.5" cy="372.5" r="2.6" fill="#F0D6A0"/></g><g class="lights a"><circle cx="111.0" cy="376.2" r="7" fill="#C8324B" opacity=".22"/><circle cx="111.0" cy="376.2" r="2.6" fill="#C8324B"/></g><g class="lights b"><circle cx="130.6" cy="378.6" r="7" fill="#FFF3D1" opacity=".22"/><circle cx="130.6" cy="378.6" r="2.6" fill="#FFF3D1"/></g><g class="lights a"><circle cx="150.2" cy="379.8" r="7" fill="#F0D6A0" opacity=".22"/><circle cx="150.2" cy="379.8" r="2.6" fill="#F0D6A0"/></g><g class="lights b"><circle cx="169.8" cy="379.8" r="7" fill="#FFE7B0" opacity=".22"/><circle cx="169.8" cy="379.8" r="2.6" fill="#FFE7B0"/></g><g class="lights a"><circle cx="189.4" cy="378.6" r="7" fill="#F0D6A0" opacity=".22"/><circle cx="189.4" cy="378.6" r="2.6" fill="#F0D6A0"/></g><g class="lights b"><circle cx="209.0" cy="376.2" r="7" fill="#C8324B" opacity=".22"/><circle cx="209.0" cy="376.2" r="2.6" fill="#C8324B"/></g><g class="lights a"><circle cx="228.5" cy="372.5" r="7" fill="#FFF3D1" opacity=".22"/><circle cx="228.5" cy="372.5" r="2.6" fill="#FFF3D1"/></g><g class="lights b"><circle cx="248.1" cy="367.5" r="7" fill="#F0D6A0" opacity=".22"/><circle cx="248.1" cy="367.5" r="2.6" fill="#F0D6A0"/></g><g class="lights a"><circle cx="267.7" cy="361.4" r="7" fill="#FFE7B0" opacity=".22"/><circle cx="267.7" cy="361.4" r="2.6" fill="#FFE7B0"/></g><path d="M49.9 308.0 Q160 360.0 270.1 308.0" stroke="#F0D6A0" stroke-opacity=".6" stroke-width="1"/><g class="lights b"><circle cx="69.9" cy="316.6" r="7" fill="#FFE7B0" opacity=".22"/><circle cx="69.9" cy="316.6" r="2.6" fill="#FFE7B0"/></g><g class="lights a"><circle cx="89.9" cy="323.5" r="7" fill="#F0D6A0" opacity=".22"/><circle cx="89.9" cy="323.5" r="2.6" fill="#F0D6A0"/></g><g class="lights b"><circle cx="110.0" cy="328.6" r="7" fill="#C8324B" opacity=".22"/><circle cx="110.0" cy="328.6" r="2.6" fill="#C8324B"/></g><g class="lights a"><circle cx="130.0" cy="332.1" r="7" fill="#FFF3D1" opacity=".22"/><circle cx="130.0" cy="332.1" r="2.6" fill="#FFF3D1"/></g><g class="lights b"><circle cx="150.0" cy="333.8" r="7" fill="#F0D6A0" opacity=".22"/><circle cx="150.0" cy="333.8" r="2.6" fill="#F0D6A0"/></g><g class="lights a"><circle cx="170.0" cy="333.8" r="7" fill="#FFE7B0" opacity=".22"/><circle cx="170.0" cy="333.8" r="2.6" fill="#FFE7B0"/></g><g class="lights b"><circle cx="190.0" cy="332.1" r="7" fill="#F0D6A0" opacity=".22"/><circle cx="190.0" cy="332.1" r="2.6" fill="#F0D6A0"/></g><g class="lights a"><circle cx="210.0" cy="328.6" r="7" fill="#C8324B" opacity=".22"/><circle cx="210.0" cy="328.6" r="2.6" fill="#C8324B"/></g><g class="lights b"><circle cx="230.1" cy="323.5" r="7" fill="#FFF3D1" opacity=".22"/><circle cx="230.1" cy="323.5" r="2.6" fill="#FFF3D1"/></g><g class="lights a"><circle cx="250.1" cy="316.6" r="7" fill="#F0D6A0" opacity=".22"/><circle cx="250.1" cy="316.6" r="2.6" fill="#F0D6A0"/></g><path d="M70.6 240.0 Q160 292.0 249.4 240.0" stroke="#F0D6A0" stroke-opacity=".6" stroke-width="1"/><g class="lights b"><circle cx="90.4" cy="250.3" r="7" fill="#F0D6A0" opacity=".22"/><circle cx="90.4" cy="250.3" r="2.6" fill="#F0D6A0"/></g><g class="lights a"><circle cx="110.3" cy="258.0" r="7" fill="#C8324B" opacity=".22"/><circle cx="110.3" cy="258.0" r="2.6" fill="#C8324B"/></g><g class="lights b"><circle cx="130.2" cy="263.1" r="7" fill="#FFF3D1" opacity=".22"/><circle cx="130.2" cy="263.1" r="2.6" fill="#FFF3D1"/></g><g class="lights a"><circle cx="150.1" cy="265.7" r="7" fill="#F0D6A0" opacity=".22"/><circle cx="150.1" cy="265.7" r="2.6" fill="#F0D6A0"/></g><g class="lights b"><circle cx="169.9" cy="265.7" r="7" fill="#FFE7B0" opacity=".22"/><circle cx="169.9" cy="265.7" r="2.6" fill="#FFE7B0"/></g><g class="lights a"><circle cx="189.8" cy="263.1" r="7" fill="#F0D6A0" opacity=".22"/><circle cx="189.8" cy="263.1" r="2.6" fill="#F0D6A0"/></g><g class="lights b"><circle cx="209.7" cy="258.0" r="7" fill="#C8324B" opacity=".22"/><circle cx="209.7" cy="258.0" r="2.6" fill="#C8324B"/></g><g class="lights a"><circle cx="229.6" cy="250.3" r="7" fill="#FFF3D1" opacity=".22"/><circle cx="229.6" cy="250.3" r="2.6" fill="#FFF3D1"/></g><path d="M67.5 383.5V390.5" stroke="#D9B26F" stroke-width=".8"/><rect x="65.0" y="388.5" width="5" height="4" rx="1" fill="#D9B26F"/><circle cx="67.5" cy="398.5" r="7" fill="url(#trbg)" stroke="#B98A45" stroke-width=".6"/><path d="M141.5 383.5V390.5" stroke="#D9B26F" stroke-width=".8"/><rect x="139.0" y="388.5" width="5" height="4" rx="1" fill="#D9B26F"/><circle cx="141.5" cy="398.5" r="7" fill="url(#trbi)" stroke="#B98A45" stroke-width=".6"/><path d="M215.5 383.5V390.5" stroke="#D9B26F" stroke-width=".8"/><rect x="213.0" y="388.5" width="5" height="4" rx="1" fill="#D9B26F"/><circle cx="215.5" cy="398.5" r="7" fill="url(#trbc)" stroke="#B98A45" stroke-width=".6"/><path d="M289.5 383.5V390.5" stroke="#D9B26F" stroke-width=".8"/><rect x="287.0" y="388.5" width="5" height="4" rx="1" fill="#D9B26F"/><circle cx="289.5" cy="398.5" r="7" fill="url(#trbg)" stroke="#B98A45" stroke-width=".6"/><path d="M86.9 337.5V344.5" stroke="#D9B26F" stroke-width=".8"/><rect x="84.4" y="342.5" width="5" height="4" rx="1" fill="#D9B26F"/><circle cx="86.9" cy="352.5" r="7" fill="url(#trbn)" stroke="#B98A45" stroke-width=".6"/><path d="M160.0 337.5V344.5" stroke="#D9B26F" stroke-width=".8"/><rect x="157.5" y="342.5" width="5" height="4" rx="1" fill="#D9B26F"/><circle cx="160.0" cy="352.5" r="7" fill="url(#trbg)" stroke="#B98A45" stroke-width=".6"/><path d="M233.1 337.5V344.5" stroke="#D9B26F" stroke-width=".8"/><rect x="230.6" y="342.5" width="5" height="4" rx="1" fill="#D9B26F"/><circle cx="233.1" cy="352.5" r="7" fill="url(#trbi)" stroke="#B98A45" stroke-width=".6"/><path d="M108.0 269.5V276.5" stroke="#D9B26F" stroke-width=".8"/><rect x="105.5" y="274.5" width="5" height="4" rx="1" fill="#D9B26F"/><circle cx="108.0" cy="284.5" r="7" fill="url(#trbi)" stroke="#B98A45" stroke-width=".6"/><path d="M177.3 269.5V276.5" stroke="#D9B26F" stroke-width=".8"/><rect x="174.8" y="274.5" width="5" height="4" rx="1" fill="#D9B26F"/><circle cx="177.3" cy="284.5" r="7" fill="url(#trbc)" stroke="#B98A45" stroke-width=".6"/><path d="M246.7 269.5V276.5" stroke="#D9B26F" stroke-width=".8"/><rect x="244.2" y="274.5" width="5" height="4" rx="1" fill="#D9B26F"/><circle cx="246.7" cy="284.5" r="7" fill="url(#trbg)" stroke="#B98A45" stroke-width=".6"/>
+<path d="M153 376H167V398H153Z" fill="#8A6128"/>
+<rect x="40" y="386" width="40" height="30" rx="1.5" fill="#141C63" stroke="#D9B26F" stroke-width=".9"/><path d="M60.0 386V416M40 397.4H80" stroke="#F0D6A0" stroke-width="3"/><path d="M60.0 386 c-9 -9 -13 0 -3 1 M60.0 386 c9 -9 13 0 3 1" stroke="#F0D6A0" stroke-width="1.6"/><rect x="238" y="392" width="34" height="24" rx="1.5" fill="#FFF7EA" stroke="#D9B26F" stroke-width=".9"/><path d="M255.0 392V416M238 401.12H272" stroke="#D9B26F" stroke-width="3"/><path d="M255.0 392 c-9 -9 -13 0 -3 1 M255.0 392 c9 -9 13 0 3 1" stroke="#D9B26F" stroke-width="1.6"/><rect x="266" y="400" width="22" height="16" rx="1.5" fill="#C8324B" stroke="#D9B26F" stroke-width=".9"/><path d="M277.0 400V416M266 406.08H288" stroke="#F0D6A0" stroke-width="3"/><path d="M277.0 400 c-9 -9 -13 0 -3 1 M277.0 400 c9 -9 13 0 3 1" stroke="#F0D6A0" stroke-width="1.6"/>
+<path d="M132 398H188L183 418H137Z" fill="#C8324B" stroke="#F0D6A0" stroke-width="1.2"/><path d="M130 398H190" stroke="#F0D6A0" stroke-width="2.4"/><path d="M139 408H181" stroke="#F0D6A0" stroke-opacity=".6"/>
+<g class="tree-star"><circle cx="160" cy="22" r="46" fill="url(#trh)"/><g stroke="#F0D6A0" stroke-width="1.2" stroke-linecap="round"><path d="M190.0 22.0 L204.0 22.0"/><path d="M181.2 43.2 L191.1 53.1"/><path d="M160.0 52.0 L160.0 66.0"/><path d="M138.8 43.2 L128.9 53.1"/><path d="M130.0 22.0 L116.0 22.0"/><path d="M138.8 0.8 L128.9 -9.1"/><path d="M160.0 -8.0 L160.0 -22.0"/><path d="M181.2 0.8 L191.1 -9.1"/></g><path d="M160 22 L160.0 0.0 L165.3 14.7Z" fill="#E5BC6E"/><path d="M160 22 L165.3 14.7 L180.9 15.2Z" fill="#FFF6DA"/><path d="M160 22 L180.9 15.2 L168.6 24.8Z" fill="#E5BC6E"/><path d="M160 22 L168.6 24.8 L172.9 39.8Z" fill="#FFF6DA"/><path d="M160 22 L172.9 39.8 L160.0 31.0Z" fill="#E5BC6E"/><path d="M160 22 L160.0 31.0 L147.1 39.8Z" fill="#FFF6DA"/><path d="M160 22 L147.1 39.8 L151.4 24.8Z" fill="#E5BC6E"/><path d="M160 22 L151.4 24.8 L139.1 15.2Z" fill="#FFF6DA"/><path d="M160 22 L139.1 15.2 L154.7 14.7Z" fill="#E5BC6E"/><path d="M160 22 L154.7 14.7 L160.0 0.0Z" fill="#FFF6DA"/><circle cx="160" cy="22" r="3" fill="#fff"/></g>
+</svg>
+            <div class="ornaments-layer" id="ornaments-layer"></div>
+          </div>
+        </div>
+      </article>
+
+      <!-- СТРАНИЦА 3: РУБРИКА 2 — ГОЛОСА И ЛИЦА -->
+      <article class="page page-night" data-page="3" data-rubric="Голоса и лица">
+        <div class="running-header">
+          <span>02 · Голоса и лица</span>
+          <span>03</span>
+        </div>
+        <div class="page-scroll">
+          <h2 class="section-title foil-text">Те, кто рядом</h2>
+          <p class="section-subtitle">Нажмите на портрет, чтобы услышать или увидеть поздравление.</p>
+
+          <div class="voices-avatars" id="voices-avatars"></div>
+
+          <div class="voice-player-card" id="voice-player-card">
+            <p class="voice-placeholder">Выберите портрет выше, чтобы включить послание</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- СТРАНИЦА 4: РУБРИКА 3 — САУНДТРЕК ГОДА -->
+      <article class="page page-night" data-page="4" data-rubric="Саундтрек года">
+        <div class="running-header">
+          <span>03 · Саундтрек года</span>
+          <span>04</span>
+        </div>
+        <div class="page-scroll">
+          <h2 class="section-title foil-text">Пластинка 2026</h2>
+
+          <div class="vinyl-stage">
+            <div class="vinyl-disc" id="vinyl-disc">
+              <div class="vinyl-grooves"></div>
+              <div class="vinyl-label">
+                <img id="vinyl-cover-img" src="" alt="Обложка трека" />
+                <span class="vinyl-spindle"></span>
+              </div>
+            </div>
+            <svg class="tonearm" viewBox="0 0 80 150" width="80" height="150" fill="none" aria-hidden="true">
+              <circle cx="62" cy="14" r="11" fill="#0B1030" stroke="#F0D6A0" stroke-width="1.6"/><circle cx="62" cy="14" r="4" fill="#F0D6A0"/>
+              <path d="M62 14 L28 112" stroke="#F0D6A0" stroke-width="3" stroke-linecap="round"/>
+              <path d="M28 112 L18 124 L32 128 L38 116 Z" fill="#D9B26F" stroke="#F0D6A0" stroke-width="1.2" stroke-linejoin="round"/>
+            </svg>
+            <div class="vinyl-now-playing">
+              <h3 id="vinyl-track-title">Выберите композицию</h3>
+              <p id="vinyl-track-artist" class="muted-text"></p>
+              <blockquote id="vinyl-track-why" class="vinyl-why"></blockquote>
+            </div>
+          </div>
+
+          <ul class="tracklist" id="tracklist"></ul>
+        </div>
+      </article>
+
+      <!-- СТРАНИЦА 5: РУБРИКА 4 — КОЛОНКА РЕДАКТОРА -->
+      <article class="page page-paper" data-page="5" data-rubric="Колонка редактора">
+        <div class="running-header">
+          <span>04 · Колонка редактора</span>
+          <span>05</span>
+        </div>
+        <div class="page-scroll">
+          <h2 class="section-title">Слово главного редактора</h2>
+          <div class="editorial-sheet">
+            <p class="editorial-salutation" id="editorial-salutation"></p>
+            <p class="editorial-body" id="editorial-body"></p>
+            <div class="editorial-footer">
+              <span class="editorial-sign" id="editorial-sign"></span>
+              <div class="wax-stamp-mini" id="editorial-stamp"></div>
+            </div>
+          </div>
+          <!-- Спрятанная звезда №1 -->
+          <button class="hidden-star-btn" data-secret-star="10" title="Тайная звезда номера" aria-label="Найти тайную звезду">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 2L14.8 8.8L22 9.5L16.5 14.2L18.2 21.3L12 17.5L5.8 21.3L7.5 14.2L2 9.5L9.2 8.8L12 2Z"/>
+            </svg>
+          </button>
+        </div>
+      </article>
+
+      <!-- СТРАНИЦА 6: РУБРИКА 5 — ГОД В ЦИФРАХ -->
+      <article class="page page-night" data-page="6" data-rubric="Год в цифрах">
+        <div class="running-header">
+          <span>05 · Год в цифрах</span>
+          <span>06</span>
+        </div>
+        <div class="page-scroll">
+          <h2 class="section-title foil-text">Итоги в числах</h2>
+          <div class="stat-showcase" id="stat-showcase">
+            <div class="stat-big-number foil-text" id="stat-number">148</div>
+            <div class="stat-gold-line" id="stat-gold-line"></div>
+            <h3 class="stat-label" id="stat-label"></h3>
+            <p class="stat-detail" id="stat-detail"></p>
+          </div>
+          <div class="stat-dots" id="stat-dots"></div>
+        </div>
+      </article>
+
+      <!-- СТРАНИЦА 7: РУБРИКА 6 — НАЙДИ ПАРУ -->
+      <article class="page page-paper" data-page="7" data-rubric="Найди пару">
+        <div class="running-header">
+          <span>06 · Найди пару</span>
+          <span>07</span>
+        </div>
+        <div class="page-scroll">
+          <h2 class="section-title">Память кадров</h2>
+          <p class="section-subtitle">Откройте все парные воспоминания, чтобы получить звезду рубрики.</p>
+          <div class="memory-grid" id="memory-grid"></div>
+          <p class="memory-status" id="memory-status"></p>
+        </div>
+      </article>
+
+      <!-- СТРАНИЦА 8: РУБРИКА 7 — КВИЗ -->
+      <article class="page page-paper" data-page="8" data-rubric="Квиз">
+        <div class="running-header">
+          <span>07 · Квиз номера</span>
+          <span>08</span>
+        </div>
+        <div class="page-scroll">
+          <h2 class="section-title">Как хорошо ты меня знаешь?</h2>
+          <div class="quiz-box" id="quiz-box"></div>
+        </div>
+      </article>
+
+      <!-- СТРАНИЦА 9: РУБРИКА 8 — БАНКА С ПЕЧЕНЬКАМИ -->
+      <article class="page page-night" data-page="9" data-rubric="Банка с печеньками">
+        <div class="running-header">
+          <span>08 · Банка с печеньками</span>
+          <span>09</span>
+        </div>
+        <div class="page-scroll">
+          <h2 class="section-title foil-text">Предсказания и купоны</h2>
+          <p class="section-subtitle">Нажмите на стеклянную банку, чтобы разломить печенье.</p>
+
+          <div class="jar-stage">
+            <button class="glass-jar-btn" id="crack-cookie-btn" aria-label="Разломить печенье">
+              <svg class="jar-svg" viewBox="0 0 220 260" width="170" height="195" fill="none" aria-hidden="true">
+<defs>
+<linearGradient id="jkg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F8E2AC"/><stop offset=".6" stop-color="#DDA95A"/><stop offset="1" stop-color="#B98235"/></linearGradient>
+<linearGradient id="jkh" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#EBC77F"/><stop offset=".6" stop-color="#C98D43"/><stop offset="1" stop-color="#8F5F24"/></linearGradient>
+<linearGradient id="jkl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9C7330"/><stop offset=".4" stop-color="#FFF6DA"/><stop offset="1" stop-color="#9C7330"/></linearGradient>
+<linearGradient id="jkw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#F0D6A0" stop-opacity=".22"/><stop offset=".5" stop-color="#F0D6A0" stop-opacity=".02"/><stop offset="1" stop-color="#F0D6A0" stop-opacity=".16"/></linearGradient>
+<radialGradient id="jkf"><stop offset="0" stop-color="#F0D6A0" stop-opacity=".5"/><stop offset="1" stop-color="#F0D6A0" stop-opacity="0"/></radialGradient>
+<g id="jkc"><path d="M-26 4 C-26 -16 26 -16 26 4 C26 18 8 20 3 10 C-2 20 -26 18 -26 4Z" stroke="#7A5120" stroke-width="1"/><path d="M-9 -7 C-3 -2 -3 6 3 10" stroke="#7A5120" stroke-opacity=".5"/><path d="M-18 -4 C-10 -11 6 -12 14 -8" stroke="#FFF6DA" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/></g>
+</defs>
+<ellipse cx="110" cy="248" rx="86" ry="9" fill="url(#jkf)"/>
+<rect x="-6" y="-3" width="30" height="5" fill="#FFF7EA" transform="translate(76.0 220.9) rotate(1.8) scale(1.1)"/><rect x="-6" y="-3" width="30" height="5" fill="#FFF7EA" transform="translate(83.4 196.6) rotate(8.5) scale(1.1)"/><rect x="-6" y="-3" width="30" height="5" fill="#FFF7EA" transform="translate(76.0 174.8) rotate(0.2) scale(1.0)"/><g fill="url(#jkh)"><use href="#jkc" transform="translate(76.0 220.9) rotate(1.8) scale(1.1)"/></g><g fill="url(#jkg)"><use href="#jkc" transform="translate(107.0 220.9) rotate(12.2) scale(0.9)"/></g><g fill="url(#jkh)"><use href="#jkc" transform="translate(139.4 224.8) rotate(-13.5) scale(1.0)"/></g><g fill="url(#jkg)"><use href="#jkc" transform="translate(83.4 196.6) rotate(8.5) scale(1.1)"/></g><g fill="url(#jkh)"><use href="#jkc" transform="translate(119.5 197.1) rotate(23.5) scale(0.9)"/></g><g fill="url(#jkg)"><use href="#jkc" transform="translate(144.0 198.9) rotate(-13.8) scale(1.0)"/></g><g fill="url(#jkh)"><use href="#jkc" transform="translate(76.0 174.8) rotate(0.2) scale(1.0)"/></g><g fill="url(#jkg)"><use href="#jkc" transform="translate(106.7 175.1) rotate(-2.2) scale(1.0)"/></g><g fill="url(#jkh)"><use href="#jkc" transform="translate(139.1 172.4) rotate(4.8) scale(1.0)"/></g><g fill="url(#jkg)"><use href="#jkc" transform="translate(82.3 150.8) rotate(-2.6) scale(1.0)"/></g><g fill="url(#jkh)"><use href="#jkc" transform="translate(125.5 147.9) rotate(-1.5) scale(1.1)"/></g><g fill="url(#jkg)"><use href="#jkc" transform="translate(144.0 151.4) rotate(23.5) scale(1.0)"/></g><g fill="url(#jkh)"><use href="#jkc" transform="translate(93.0 130.9) rotate(-0.4) scale(1.0)"/></g><g fill="url(#jkg)"><use href="#jkc" transform="translate(129.2 130.6) rotate(15.8) scale(1.0)"/></g>
+<g class="jk-top" fill="url(#jkg)"><path d="M92 112 l24 -6 l6 4" stroke="none"/><use href="#jkc" transform="translate(110.0 106) rotate(5) scale(1.05)"/></g>
+<path d="M62 50 H158 Q172 52 176 70 L180 84 V228 Q180 244 164 244 H56 Q40 244 40 228 V84 L44 70 Q48 52 62 50Z" fill="url(#jkw)" stroke="#F0D6A0" stroke-width="1.8"/>
+<path d="M62 50 H158 Q172 52 176 70 L180 84 V228 Q180 244 164 244 H56 Q40 244 40 228 V84 L44 70 Q48 52 62 50Z" stroke="#F0D6A0" stroke-opacity=".3" transform="translate(110 147) scale(.94 .955) translate(-110 -147)"/>
+<path d="M46 234 Q110 256 174 234" stroke="#F0D6A0" stroke-opacity=".35"/>
+<path d="M54 92 V214" stroke="#fff" stroke-opacity=".3" stroke-width="4" stroke-linecap="round"/><path d="M166 100 V150" stroke="#fff" stroke-opacity=".2" stroke-width="3" stroke-linecap="round"/><path d="M62 62 H110" stroke="#fff" stroke-opacity=".25" stroke-width="2" stroke-linecap="round"/>
+<rect x="60" y="30" width="100" height="22" rx="6" fill="url(#jkl)" stroke="#7A5120" stroke-width=".8"/>
+<path d="M72 34V48M82 34V48M92 34V48M102 34V48M112 34V48M122 34V48M132 34V48M142 34V48" stroke="#7A5120" stroke-opacity=".35"/>
+<rect x="56" y="52" width="108" height="8" rx="2" fill="#C8324B" stroke="#8F1E31" stroke-width=".6"/>
+<path d="M110 56 C92 38 76 52 88 64 C96 68 106 62 110 56Z M110 56 C128 38 144 52 132 64 C124 68 114 62 110 56Z" fill="#C8324B" stroke="#8F1E31" stroke-width=".8"/>
+<path d="M108 58 L98 84 L107 79 L110 88Z M112 58 L122 84 L113 79 L110 88Z" fill="#B02A42" stroke="#8F1E31" stroke-width=".6"/><circle cx="110" cy="57" r="5" fill="#D4405A" stroke="#8F1E31" stroke-width=".7"/>
+<path d="M132 62 C146 70 152 80 154 92" stroke="#D9B26F" stroke-width="1.2"/>
+<g transform="translate(144.0 92) rotate(10)"><path d="M0 0 L-17 10 V40 H17 V10Z" fill="#FFF7EA" stroke="#D9B26F"/><circle cy="9" r="2" fill="#D9B26F"/><text y="28" text-anchor="middle" font-size="8.5" font-family="Bodoni Moda,Georgia,serif" font-style="italic" fill="#1B1740">на счастье</text></g>
+<path class="jk-spark" d="M196 70l2 6 6 2-6 2-2 6-2-6-6-2 6-2z M16 130l1.6 4.4 4.4 1.6-4.4 1.6-1.6 4.4-1.6-4.4-4.4-1.6 4.4-1.6z M200 190l1.4 3.6 3.6 1.4-3.6 1.4-1.4 3.6-1.4-3.6-3.6-1.4 3.6-1.4z" fill="#F0D6A0"/>
+</svg>
+              <span class="jar-cta">Разломить печенье</span>
+            </button>
+
+            <div class="fortune-slip hidden" id="fortune-slip"></div>
+          </div>
+
+          <div class="saved-coupons" id="saved-coupons"></div>
+        </div>
+      </article>
+
+      <!-- СТРАНИЦА 10: РУБРИКА 9 — АДВЕНТ-КАЛЕНДАРЬ -->
+      <article class="page page-paper" data-page="10" data-rubric="Адвент-календарь">
+        <div class="running-header">
+          <span>09 · Адвент-календарь</span>
+          <span>10</span>
+        </div>
+        <div class="page-scroll">
+          <h2 class="section-title">Двенадцать дней декабря</h2>
+          <p class="section-subtitle">Прошедшие дни уже открыты, сегодняшняя дверца подсвечена золотом.</p>
+          <div class="advent-grid" id="advent-grid"></div>
+          <div class="advent-detail-card hidden" id="advent-detail-card"></div>
+
+          <!-- Спрятанная звезда №2 -->
+          <button class="hidden-star-btn" data-secret-star="11" title="Тайная звезда номера" aria-label="Найти тайную звезду">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 2L14.8 8.8L22 9.5L16.5 14.2L18.2 21.3L12 17.5L5.8 21.3L7.5 14.2L2 9.5L9.2 8.8L12 2Z"/>
+            </svg>
+          </button>
+        </div>
+      </article>
+
+      <!-- СТРАНИЦА 11: РУБРИКА 10 — ЖЕЛАНИЕ НА 2027 И ПИСЬМО В БУДУЩЕЕ -->
+      <article class="page page-paper" data-page="11" data-rubric="Письмо в 2027">
+        <div class="running-header">
+          <span>10 · Желание на 2027</span>
+          <span>11</span>
+        </div>
+        <div class="page-scroll">
+          <h2 class="section-title">Капсула времени 2027</h2>
+          <p class="section-subtitle">Выберите три главные цели и напишите письмо себе в следующий декабрь. Текст хранится только в вашем браузере.</p>
+
+          <div class="goals-stickers" id="goals-stickers"></div>
+
+          <label class="letter-label" for="future-letter-input">Письмо себе в декабрь 2027:</label>
+          <textarea id="future-letter-input" class="future-textarea" rows="5" placeholder="Дорогая я через год, надеюсь, что..."></textarea>
+
+          <div class="capsule-actions">
+            <button class="primary-cranberry-btn" id="seal-future-btn">Запечатать и создать открытку на память</button>
+          </div>
+
+          <div class="capsule-result hidden" id="capsule-result">
+            <p class="capsule-saved-note">Письмо запечатано в памяти вашего устройства. Сохраните открытку-напоминание:</p>
+            <img id="capsule-card-preview" class="story-card-preview" alt="Открытка с целями на 2027 год" />
+            <a id="download-capsule-btn" class="secondary-gold-btn" download="capsule-2027.png">Скачать открытку</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- СТРАНИЦА 12: ФИНАЛ В 00:00 -->
+      <article class="page page-night" data-page="12" data-rubric="Полночь">
+        <div class="running-header">
+          <span>Специальный разворот · 00:00</span>
+          <span>12</span>
+        </div>
+        <div class="page-scroll">
+          <!-- До наступления 00:00 -->
+          <div class="finale-locked" id="finale-locked">
+            <div class="wax-seal seal-large">
+              <span class="wax-monogram" id="finale-lock-monogram">А</span>
+            </div>
+            <h2 class="section-title foil-text">Запечатано до полуночи</h2>
+            <p class="section-subtitle">Когда часы пробьют 00:00, сургуч треснет и откроется главный подарок этого выпуска.</p>
+            <div class="countdown-digits" id="finale-countdown">00:00:00</div>
+          </div>
+
+          <!-- После наступления 00:00 -->
+          <div class="finale-unlocked hidden" id="finale-unlocked">
+            <h2 class="section-title foil-text" id="finale-heading"></h2>
+            <p class="finale-msg" id="finale-message"></p>
+
+            <div class="gift-certificate-card">
+              <span class="cert-kicker">Главный подарок номера</span>
+              <h3 class="cert-title" id="finale-gift-title"></h3>
+              <p class="cert-desc" id="finale-gift-subtitle"></p>
+              <div class="cert-code" id="finale-gift-code"></div>
+            </div>
+
+            <div class="finale-video-wrap hidden" id="finale-video-wrap">
+              <video id="finale-video" controls playsinline></video>
+            </div>
+
+            <!-- Бонусная карточка за все 12 звёзд -->
+            <div class="bonus-stars-card hidden" id="bonus-stars-card">
+              <span class="cert-kicker">Собраны все 12 звёзд</span>
+              <h3 id="bonus-title"></h3>
+              <p id="bonus-text"></p>
+            </div>
+
+            <!-- Открытка для сторис «Героиня номера» -->
+            <div class="stories-card-box">
+              <h3 class="stories-heading">Открытка для сторис</h3>
+              <img id="hero-story-preview" class="story-card-preview" alt="Героиня номера" />
+              <a id="download-story-btn" class="primary-cranberry-btn" download="heroine-of-the-issue.png">Отправить в сторис или сохранить</a>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Навигация по краям (удобна и на десктопе, и на телефоне) -->
+    <nav class="page-nav-bar">
+      <button class="nav-arrow-btn" id="prev-page-btn" aria-label="Предыдущая страница">Назад</button>
+      <span class="page-indicator" id="page-indicator">Обложка</span>
+      <button class="nav-arrow-btn" id="next-page-btn" aria-label="Следующая страница">Далее</button>
+    </nav>
+  </main>
+
+  <!-- Модальное окно для фото в рамке-полароиде -->
+  <div class="modal-backdrop hidden" id="photo-modal" role="dialog" aria-modal="true">
+    <div class="polaroid-frame">
+      <button class="modal-close-btn" id="close-photo-modal" aria-label="Закрыть">×</button>
+      <div class="polaroid-img-wrap">
+        <img id="polaroid-img" src="" alt="" />
+      </div>
+      <div class="polaroid-caption">
+        <span class="polaroid-date" id="polaroid-date"></span>
+        <p id="polaroid-text"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно для полночного вскрытия печати -->
+  <div class="midnight-flash hidden" id="midnight-flash">
+    <div class="midnight-flash-inner">
+      <div class="wax-seal seal-large breaking" id="flash-seal">
+        <div class="seal-crack"></div>
+        <span class="wax-monogram" id="flash-monogram">А</span>
+      </div>
+      <h2 class="foil-text">Полночь наступила</h2>
+      <p>Печать сломана. Главный подарок открыт.</p>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="sound.js"></script>
+  <script src="story-card.js"></script>
+  <script src="app.js"></script>
+  <script src="atmosphere.js"></script>
+  <script src="order-check.js"></script>
+</body>
+</html>
